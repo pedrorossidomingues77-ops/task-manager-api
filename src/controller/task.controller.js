@@ -1,73 +1,51 @@
+const taskService = require("../services/task.service")
 
-let tasks = [];
-let idCounter = 1;
-
-exports.create = ((req, res) => {
+exports.create = (req, res) => {
+  try {
     const { title } = req.body
+    const task = taskService.createTask(title)
+    return res.status(201).json(task)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+}
 
-    if (!title) {
-        return res.status(400).json({ error: "Title is required..." })
-    } else {
-        const newTask = {
-            id: idCounter++,
-            title: title,
-            done: false
-        }
-        tasks.push(newTask)
+exports.list = (req, res) => {
+  try {
+    const tasks = taskService.listTasks()
+    return res.status(200).json({ tasks })
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
 
-        return res.status(201).json(newTask)
-    }
-})
-
-exports.list = ((req, res) => {
-    return res.json({ tasks: tasks })
-})
-
-exports.getById = ((req, res) => {
-    const getId = Number(req.params.id)
-    const task = tasks.find(t => t.id === getId)
-
-    if (!task) {
-        return res.status(404).json({error: "The task doesn't exists..."})
-    }
-    return res.json(task)
-
-})
-
-exports.update = ((req, res) => {
-    const getId = Number(req.params.id)
-    const data = req.body
-    const task = tasks.find(t => t.id === getId)
-
-    if (!task) {
-        return res.status(404).json({message: "The task doesn't exists..."})
-    }
-    if (data.title !== undefined) {
-        if (data.title === "") {
-            return res.status(400).json({ error: "Title cannot be empty" })
-        }
-        task.title = data.title
-    }
-    if (data.done !== undefined) {
-        if (typeof data.done !== "boolean") {
-            return res.status(400).json({ error: "Done must be boolean" })
-        }
-        task.done = data.done
-    }
-
+exports.getById = (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    const task = taskService.getTaskById(id)
     return res.status(200).json(task)
-})
+  } catch (error) {
+    return res.status(404).json({ error: error.message })
+  }
+}
 
-exports.delete = ((req, res) => {
-    const getId = Number(req.params.id)
-    const index = tasks.findIndex(t => t.id === getId)
+exports.update = (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    const data = req.body
+    const updatedTask = taskService.taskUpdate(id, data)
+    return res.status(200).json(updatedTask)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+}
 
-    if (index === -1) {
-        return res.status(404).json({error: "The task doesn't exists..."})
-    }
-
-    tasks.splice(index, 1)
-
-    return res.status(200).json({message: "The task was deleted"})
-
-})
+exports.delete = (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    taskService.taskDelete(id)
+    return res.status(200).json({ message: "The task was deleted" })
+  } catch (error) {
+    return res.status(404).json({ error: error.message })
+  }
+}
